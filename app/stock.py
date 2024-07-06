@@ -1,10 +1,12 @@
 import pandas as pd
 import requests
+import matplotlib.pyplot as plt
+import mplfinance as mpf
 import json
 import datetime
+import twstock
 
 def get_stock_info(stock_code):
-    # Determine if it's an OTC stock (starts with '6')
     if stock_code.startswith('6'):
         stock_list = f'otc_{stock_code}.tw'
     else:
@@ -52,3 +54,25 @@ def get_stock_info(stock_code):
     info += f"更新時間: {df['資料更新時間'].values[0]}"
     
     return info
+
+def get_kline(stock_code):
+    stock = twstock.Stock(stock_code)
+    target_price = stock.fetch_from(2020,5)
+    name_attribute = [
+        'Date', 'Capacity', 'Volume', 'Open', 'High', 'Low', 'Close', 'Change',
+        'Transaction'
+    ]
+    df = pd.DataFrame(columns=name_attribute, data=target_price)
+    df['Date'] = pd.to_datetime(df['Date'])
+    df.set_index('Date', inplace=True)
+    
+    filename = f'./data/{stock_code}.csv'
+    df.to_csv(filename)
+    
+    mc = mpf.make_marketcolors(up='r', down='g', inherit=True)
+    s = mpf.make_mpf_style(base_mpf_style='yahoo', marketcolors=mc)
+    kwargs = dict(type='candle', mav=(5,20,60), volume=True, figratio=(10,8), figscale=0.75, title=stock_code, style=s)
+    mpf.plot(df, **kwargs)
+    klinename = f'kline_{stock_code}.png'
+    mpf.savefig(filename)
+    return filename

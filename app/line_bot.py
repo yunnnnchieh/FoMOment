@@ -2,11 +2,10 @@ from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, JoinEvent, LeaveEvent
 from app.firebase import get_messages, clear_messages, add_message, get_summary_count, set_summary_count, delete_group_data, check_fortune_usage
-from app.gemini import summarize_with_gemini
+from app.gemini import summarize_with_gemini, talk_to_gemini
 from app.config import Config
 from app.exhibition import get_exhibition_data, filter_exhibitions, format_exhibition_info
-""" from app.type import TemplateSendMessage """
-from app.stock import get_stock_info
+from app.stock import get_stock_info, get_kline
 from app.fortune import get_daily_fortune, create_fortune_flex_message
 import threading
 line_bot_api = LineBotApi(Config.LINE_CHANNEL_ACCESS_TOKEN)
@@ -66,6 +65,15 @@ def handle_message(event):
                 line_bot_api.reply_message(
                     event.reply_token,
                     TextSendMessage(text=stock_info)
+                )
+                return
+            elif user_message.startswith("我需要聊聊"):
+                message = user_message[6:].strip()
+                reply = talk_to_gemini(message)
+                
+                line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(text=reply)
                 )
                 return
         elif event.source.type == 'group':

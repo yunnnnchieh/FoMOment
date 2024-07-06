@@ -4,3 +4,4 @@ firebase-admin
 google-generativeai
 gunicorn
 pandas
+twstock
